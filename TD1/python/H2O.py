@@ -1,8 +1,22 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
+"""
 
+Point group C2v
 
+Symmetry elements and operations, done with vpython and numpy
+
+requires Matrices.py 
+
+Informations
+------------
+Author : Martin Vérot  from the ENS de Lyon, France
+Licence : Creative Commons CC-BY-NC-SA 4.0 
+
+"""
+import Matrices
 import numpy as np
+import time
 
 from vpython import *
 
@@ -12,8 +26,7 @@ scene.background = color.white
 scene.range = 10
 scene.forward = vector(0,1,0)
 scene.up=vector(0,0,1)
-N = 15000
-scene.title = f'A {N}-element points object with random radii and colors'
+scene.title = 'Molécule d\'eau - groupe C2v'
 # Display frames per second and render time:
 scene.append_to_title("<div id='fps'/>")
 
@@ -29,13 +42,73 @@ def Runbutton(b):
         run = True
         b.text = 'Pause'
 
-def killbutton(b):
-    stop_server()
+def showsigmay():
+    Matrices.TogglePlane(sigmay)
+
+def showsigmax():
+    Matrices.TogglePlane(sigmax)
+
+def showC2():
+    C2.visible=not(C2.visible) 
+
+def ResetPos():
+    global coords 
+    for u in range(coords.shape[1]):
+        atoms[u].pos = vector(*initialcoords[:,u])
+    coords = np.copy(initialcoords)
 
 
+
+def applyE():
+    pass
+
+def applyC2():
+    global coords 
+    rate(5)
+    for i in range(250):
+        time.sleep(0.01)
+        newcoords = np.matmul(Matrices.RotationZ(i*np.pi/249),coords)
+        for u in range(coords.shape[1]):
+             atoms[u].pos = vector(*newcoords[:,u])
+    coords = newcoords
+
+def applysigmay():
+    global coords 
+    rate(5)
+    for i in range(250):
+        time.sleep(0.01)
+        newcoords = np.matmul(Matrices.InvY(i/249),coords)
+        for u in range(coords.shape[1]):
+             atoms[u].pos = vector(*newcoords[:,u])
+    coords = newcoords
+    
+def applysigmax():
+    global coords 
+    rate(5)
+    for i in np.linspace(-1,1,250):
+        time.sleep(0.01)
+        newcoords = np.matmul(Matrices.InvX(i),coords)
+        for u in range(coords.shape[1]):
+             atoms[u].pos = vector(*newcoords[:,u])
+    coords = newcoords
+
+
+
+scene.append_to_caption('\n<h2>Éléments de symétrie</h2>')
+button(text='C2', bind=showC2)
+button(text='sigmay', bind=showsigmay)
+button(text='sigmax', bind=showsigmax)
+scene.append_to_caption('<h2>Opérations</h2>')
+
+button(text='Reset', bind=ResetPos)
+button(text='E', bind=applyE)
+button(text='C2', bind=applyC2)
+button(text='sigmay', bind=applysigmay)
+button(text='sigmax', bind=applysigmax)
+
+scene.append_to_caption('<h3>Contrôle</h3>')
 button(text='Pause', bind=Runbutton)
-button(text='Stop', bind=killbutton)
-scene.append_to_caption("""
+scene.append_to_caption("""\n
 To rotate "camera", drag with right button or Ctrl-drag.
 To zoom, drag with middle button or Alt/Option depressed, or use scroll wheel.
   On a two-button mouse, middle is left + right.
@@ -43,38 +116,36 @@ To pan left/right and up/down, Shift-drag.
 Touch screen: pinch/extend to zoom, swipe or two-finger rotate.""")
 
 
-sphere(pos=vector(0,0,0),color=color.red)
-sphere(pos=vector(-1,0,-1),radius=0.75)
-sphere(pos=vector(1,0,-1),radius=0.75)
-#posCamera = vector(0,10,0)
+E =  Matrices.Identity()
+theta = 2*np.pi/2
+C2 = Matrices.RotationZ(theta)
+invy = Matrices.InvY()
+invx = Matrices.InvX()
 
-posCamera = vector(0,10,0)
-
-
-
-
-C2 = curve(vector(0,0,-5), vector(0,0,7),color=color.green,radius=0.1)
-Tc = text(text='C2',align='center', color=color.black,pos=vector(0,0,7),axis=vector(1,0,0),up=vector(0,0,1))
-#sigmaV =quad( vs=[vector(-5,0,-5), vector(-5,0,5), vector(5,0,-5),vector(5,0,5)])     
-
-a = vertex( pos=vector(-5,0,-5) ,color=color.purple,opacity=0.5)
-b = vertex( pos=vector(-5,0,5) ,color=color.purple,opacity=0.5)
-d = vertex( pos=vector(5,0,-5) ,color=color.purple,opacity=0.5)
-c = vertex( pos=vector(5,0,5) ,color=color.purple,opacity=0.5)
-SigmaV = quad(vs= [a,b,c,d] ,opacity=0.5 )
-
-Tv = text(text='σv',align='center', color=color.black,pos=vector(-4,0,4),axis=vector(1,0,0),up=vector(0,0,1))
+O = np.matrix([[0],[0],[0]])
+H1 = np.matrix([[1],[0],[-1]])
+H2 = np.matmul(C2,H1)
+initialcoords = np.concatenate((O,H1,H2),axis=1)
+coords = np.copy(initialcoords)
+print(coords)
 
 
-a1 = vertex( pos=vector(0,-5,-5) ,color=color.blue,opacity=0.5)
-b1 = vertex( pos=vector(0,-5,5) ,color=color.blue,opacity=0.5)
-d1 = vertex( pos=vector(0,5,-5) ,color=color.blue,opacity=0.5)
-c1 = vertex( pos=vector(0,5,5) ,color=color.blue,opacity=0.5)
-SigmaD = quad(vs= [a1,b1,c1,d1],opacity=0.5 )
- 
-Td = text(text='σd',align='center', color=color.black,pos=vector(0,-4,4),axis=vector(0,1,0),up=vector(0,0,1))
+colors = Matrices.AtomColors()
+colors2 = Matrices.OperatorColors()
+
+radii = [1,0.75,0.75]
+atoms=[]
+for u in range(coords.shape[1]):
+    atoms.append(sphere(pos=vector(*coords[:,u]),color=colors[u],radius=radii[u]))
+
+C2 = curve(vector(0,0,-5), vector(0,0,7),color=colors2[0],radius=0.1)
+
+p = [vector(-5,0,-5),vector(-5,0,5),vector(5,0,5),vector(5,0,-5),vector(-4,0,4),vector(1,0,0),vector(0,0,1)]
+sigmay = Matrices.PlotRotatedPlane(p,0,vector(0,0,1),'σv1',colors2[2])
+sigmax = Matrices.PlotRotatedPlane(p,np.pi/2,vector(0,0,1),'σv1',colors2[3])
+      
 
 while True:
     rate(5)
     if run: # Currently there isn't a way to rotate a points object, so rotate scene.forward:
-        scene.forward = scene.forward.rotate(angle=-np.pi/50, axis=vec(0,0,1))
+        scene.forward = scene.forward.rotate(angle=-np.pi/100, axis=vec(0,0,1))
