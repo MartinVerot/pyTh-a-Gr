@@ -11,8 +11,10 @@ if __name__ == '__main__':
     C3 = Matrices.RotationZ(theta)
     C32 = Matrices.RotationZ(2*theta)
     inv1 = Matrices.InvY()
-    inv2 = np.matmul(inv1,C3)
-    inv3 = np.matmul(inv1,C32)
+    invC3 =  Matrices.RotationZ(-theta)
+    invC32 =  Matrices.RotationZ(-2*theta)
+    inv2 = np.matmul(C3,np.matmul(inv1,invC3))
+    inv3 = np.matmul(C32,np.matmul(inv1,invC32))
 
     N = np.matrix([[0],[0],[0]])
     H1 = np.matrix([[1],[0],[-1]])
