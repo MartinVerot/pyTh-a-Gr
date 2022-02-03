@@ -17,8 +17,8 @@ if __name__ == '__main__':
     #C2
     operations.append(np.matrix([[0,1,0,0],
                                 [1,0,0,0],
-                                [0,0,1,0],
-                                [0,0,0,1]]))
+                                [0,0,0,1],
+                                [0,0,1,0]]))
     #S4
     operations.append(np.matrix([[0,0,1,0],
                                 [0,0,0,1],
